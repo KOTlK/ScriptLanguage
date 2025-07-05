@@ -1,35 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
+using Enum = System.Enum;
 
 using static TokenType;
 
 public struct Token {
     public TokenType Type;
     public string    StringValue;
-    public char      CharValue;
     public int       Line;
     public int       Column;
-}
-
-public class Tokenizer {
-    public List<Token> Tokens;
-    public int         Current;
-    public int         Length;
-
-    public Token GetCurrent() {
-        return Tokens[Current];
-    }
-
-    public Token EatToken() {
-        Current++;
-
-        return Tokens[Current];
-    }
-
-    public Token Previous(int i = 0) {
-        return Tokens[Length - (1 + i)];
-    }
 }
 
 public static class Lexer {
@@ -48,16 +28,14 @@ public static class Lexer {
         "static",
     };
 
-    private static StringBuilder sb;
-
     public static Tokenizer Tokenize(string text) {
         var tokenizer = new Tokenizer();
         var tokens    = new List<Token>();
+        var sb        = new StringBuilder();
         var len       = text.Length;
         var line      = 1;
-        var lineStart = 0;
+        var lineStart = -1;
         sb = new();
-        sb.Clear();
 
         for(var i = 0; i < len; ++i) {
             var c = text[i];
@@ -68,7 +46,7 @@ public static class Lexer {
                 case ' '  : break;
                 case '\n' :
                     line++;
-                    lineStart = i + 1;
+                    lineStart = i;
                     break;
                 case (char)Semicolon : {
                     var token    = new Token();
@@ -77,7 +55,7 @@ public static class Lexer {
                     token.Column = i - lineStart;
                     tokens.Add(token);
                 } break;
-                // I don't believe this language is real.
+                // I can't believe this language is real.
                 // I need curly brackets in this case or I'll get:
                 // "A local or parameter named 'token' cannot be declared
                 // in this scope because that name is used in an enclosing local scope
@@ -105,6 +83,18 @@ public static class Lexer {
                     tokens.Add(token);
                 } break;
                 case (char)Div : {
+                    if (text[i+1] == '/') {
+                        i++;
+                        for ( ; i < len; ++i) {
+                            if (text[i] == '\n') {
+                                line++;
+                                lineStart = i;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+
                     var token    = new Token();
                     token.Type   = Div;
                     token.Line   = line;
@@ -225,7 +215,7 @@ public static class Lexer {
                 } break;
                 case (char)SQuote : {
                     var token    = new Token();
-                    token.Type   = Char;
+                    token.Type   = Literal;
                     token.Line   = line;
                     token.Column = i - lineStart;
                     i++;
@@ -239,7 +229,7 @@ public static class Lexer {
                         i++;
                     }
 
-                    token.CharValue = text[i];
+                    token.StringValue = $"{text[i]}";
 
                     i++;
 
@@ -252,7 +242,7 @@ public static class Lexer {
                 } break;
                 case (char)DQuote : {
                     var token    = new Token();
-                    token.Type   = String;
+                    token.Type   = Literal;
                     token.Line   = line;
                     token.Column = i-lineStart;
                     sb.Clear();
@@ -295,13 +285,18 @@ public static class Lexer {
                     var col = i - lineStart;
 
                     if (IsNumber(text[i])) {
-                        // parse number
                         for ( ; i < len; ++i) {
-                            if (text[i] == (char)Semicolon) break;
-                            if (text[i] == (char)Comma)     break;
-                            if (text[i] == ' ')             break;
-                            if (text[i] == '\t')            break;
-                            if (text[i] == '\r')            break;
+                            if(text[i] == (char)Semicolon) break;
+                            if(text[i] == (char)Comma)     break;
+                            if(text[i] == (char)ORParen)   break;
+                            if(text[i] == (char)CRParen)   break;
+                            if(text[i] == (char)OSQParen)  break;
+                            if(text[i] == (char)CSQParen)  break;
+                            if(text[i] == (char)OParen)    break;
+                            if(text[i] == (char)CParen)    break;
+                            if(text[i] == ' ')             break;
+                            if(text[i] == '\t')            break;
+                            if(text[i] == '\r')            break;
 
                             sb.Append(text[i]);
                         }
@@ -311,7 +306,7 @@ public static class Lexer {
                         sb.Clear();
 
                         var token         = new Token();
-                        token.Type        = Number;
+                        token.Type        = Literal;
                         token.StringValue = txt;
                         token.Line        = line;
                         token.Column      = col;
@@ -332,13 +327,17 @@ public static class Lexer {
                         var txt = sb.ToString();
                         sb.Clear();
 
-                        if(Keywords.Contains(txt)) {
+                        if (Keywords.Contains(txt)) {
                             var token         = new Token();
-                            token.Type        = Keyword;
-                            token.StringValue = txt;
-                            token.Line        = line;
-                            token.Column      = col;
-                            tokens.Add(token);
+                            if (Enum.TryParse(txt, true, out TokenType keyword)) {
+                                token.Type        = keyword;
+                                token.StringValue = txt;
+                                token.Line        = line;
+                                token.Column      = col;
+                                tokens.Add(token);
+                            } else {
+                                Debug.LogError($"Cannot parse keyword {txt}");
+                            }
                         } else {
                             var token         = new Token();
                             token.Type        = Ident;
@@ -351,6 +350,14 @@ public static class Lexer {
                 } break;
             }
         }
+
+        var tkn = new Token();
+
+        tkn.Type   = EndOfFile;
+        tkn.Line   = line;
+        tkn.Column = 1;
+
+        tokens.Add(tkn);
 
         tokenizer.Tokens  = tokens;
         tokenizer.Current = 0;
