@@ -13,6 +13,7 @@ public enum StatementType {
     VarDecl = 0,
     Assign  = 1,
     Return  = 2,
+    Typedef = 3,
 }
 
 public class AstNode {
@@ -28,7 +29,7 @@ public class AstNode {
     public AstNode       Operator;
     public AstNode       Left;
     public AstNode       Right;
-
+    public TypeInfo      TypeInfo;
 
     public void Draw(StringBuilder sb, ref int indent) {
         const int spaces = 3;
@@ -40,6 +41,8 @@ public class AstNode {
             } break;
             case AstType.Literal : {
                 sb.Append(' ', indent * spaces);
+                sb.Append(TypeInfo.Name);
+                sb.Append(" : ");
                 sb.Append(String);
                 sb.Append('\n');
             } break;
@@ -83,6 +86,19 @@ public class AstNode {
                     }
                 } else if (StmtType == StatementType.Return) {
                     Expression.Draw(sb, ref indent);
+                } else if (StmtType == StatementType.Typedef) {
+                    sb.Append(TypeInfo.Name);
+                    sb.Append(":\n");
+                    indent++;
+                    foreach(var field in TypeInfo.Fields) {
+                        sb.Append(' ', spaces * indent);
+                        sb.Append($"{field.Name} : {field.Type.Name}\n");
+                    }
+                    sb.Append(' ', spaces * indent);
+                    sb.Append($"Align: {TypeInfo.Align}\n");
+                    sb.Append(' ', spaces * indent);
+                    sb.Append($"Size:  {TypeInfo.Size}");
+                    indent--;
                 }
                 indent--;
                 sb.Append('\n');

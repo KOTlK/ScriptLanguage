@@ -215,7 +215,7 @@ public static class Lexer {
                 } break;
                 case (char)SQuote : {
                     var token    = new Token();
-                    token.Type   = Literal;
+                    token.Type   = CharLiteral;
                     token.Line   = line;
                     token.Column = i - lineStart;
                     i++;
@@ -242,7 +242,7 @@ public static class Lexer {
                 } break;
                 case (char)DQuote : {
                     var token    = new Token();
-                    token.Type   = Literal;
+                    token.Type   = StringLiteral;
                     token.Line   = line;
                     token.Column = i-lineStart;
                     sb.Clear();
@@ -286,17 +286,12 @@ public static class Lexer {
 
                     if (IsNumber(text[i])) {
                         for ( ; i < len; ++i) {
-                            if(text[i] == (char)Semicolon) break;
-                            if(text[i] == (char)Comma)     break;
-                            if(text[i] == (char)ORParen)   break;
-                            if(text[i] == (char)CRParen)   break;
-                            if(text[i] == (char)OSQParen)  break;
-                            if(text[i] == (char)CSQParen)  break;
-                            if(text[i] == (char)OParen)    break;
-                            if(text[i] == (char)CParen)    break;
-                            if(text[i] == ' ')             break;
-                            if(text[i] == '\t')            break;
-                            if(text[i] == '\r')            break;
+                            if (IsSpecialSymbol(text[i])) {
+                                if(text[i] != '.') break;
+                            }
+                            if (text[i] == ' ')             break;
+                            if (text[i] == '\t')            break;
+                            if (text[i] == '\r')            break;
 
                             sb.Append(text[i]);
                         }
@@ -313,9 +308,7 @@ public static class Lexer {
                         tokens.Add(token);
                     } else {
                         for ( ; i < len; ++i) {
-                            if (text[i] == (char)Semicolon) break;
-                            if (text[i] == (char)Comma)     break;
-                            if (text[i] == (char)Dot)       break;
+                            if (IsSpecialSymbol(text[i]))   break;
                             if (text[i] == ' ')             break;
                             if (text[i] == '\t')            break;
                             if (text[i] == '\r')            break;
@@ -368,5 +361,40 @@ public static class Lexer {
 
     public static bool IsNumber(char c) {
         return (c >= '0' && c <= '9');
+    }
+
+    private static bool IsSpecialSymbol(char c) {
+        switch(c) {
+            case ','  : return true;
+            case ':'  : return true;
+            case ';'  : return true;
+            case '{'  : return true;
+            case '}'  : return true;
+            case '['  : return true;
+            case ']'  : return true;
+            case '('  : return true;
+            case ')'  : return true;
+            case '.'  : return true;
+            case '*'  : return true;
+            case '&'  : return true;
+            case '%'  : return true;
+            case '^'  : return true;
+            case '$'  : return true;
+            case '#'  : return true;
+            case '@'  : return true;
+            case '!'  : return true;
+            case '"'  : return true;
+            case '\'' : return true;
+            case '\\' : return true;
+            case '|'  : return true;
+            case '/'  : return true;
+            case '<'  : return true;
+            case '>'  : return true;
+            case '-'  : return true;
+            case '='  : return true;
+            case '+'  : return true;
+            case '~'  : return true;
+            default   : return false;
+        }
     }
 }

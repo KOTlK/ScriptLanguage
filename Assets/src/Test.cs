@@ -21,6 +21,18 @@ public class Test : MonoBehaviour {
 
         var ast = AstParser.Parse(tokenizer, err);
 
+        if(err.Count > 0) {
+            Debug.LogError(err.ToString());
+        }
+
+        foreach(var node in ast.Typedefs) {
+            var indent = 0;
+            node.Draw(sb, ref indent);
+            sb.Append('\n', 1);
+        }
+
+        sb.Append('\n', 3);
+
         foreach(var node in ast.Nodes) {
             var indent = 0;
             node.Draw(sb, ref indent);
@@ -30,8 +42,5 @@ public class Test : MonoBehaviour {
         Text.text = sb.ToString();
 
 
-        if(err.Count > 0) {
-            Debug.LogError(err.ToString());
-        }
     }
 }

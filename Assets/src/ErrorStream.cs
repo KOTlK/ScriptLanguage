@@ -27,4 +27,16 @@ public class ErrorStream {
 
         return sb.ToString();
     }
+
+    public void UnexpectedSymbol(int line, int column, TokenType expected, TokenType got) {
+        Errors.Add(new Error() {
+            Message = $"unexpected symbol at {line}:{column}. Expected {expected}, got {got}"
+        });
+    }
+
+    public void TypeAlreadyDefined(int line, int column, string name) {
+        Errors.Add(new Error() {
+            Message = $"{line}:{column}. Type '{name}' is already defined."
+        });
+    }
 }
