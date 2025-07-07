@@ -1,4 +1,5 @@
 using System.Text;
+using System.Collections.Generic;
 
 public enum AstType {
     None          = 0,
@@ -10,10 +11,12 @@ public enum AstType {
 }
 
 public enum StatementType {
-    VarDecl = 0,
-    Assign  = 1,
-    Return  = 2,
-    Typedef = 3,
+    VarDecl  = 0,
+    Assign   = 1,
+    Return   = 2,
+    Typedef  = 3,
+    Fundef   = 4,
+    Funcall  = 5,
 }
 
 public class AstNode {
@@ -30,6 +33,8 @@ public class AstNode {
     public AstNode       Left;
     public AstNode       Right;
     public TypeInfo      TypeInfo;
+    public List<AstNode> Args;
+    public List<AstNode> Body;
 
     public void Draw(StringBuilder sb, ref int indent) {
         const int spaces = 3;
@@ -72,16 +77,13 @@ public class AstNode {
                 if(StmtType == StatementType.VarDecl) {
                     Ident.Draw(sb, ref indent);
                     if(Stmt != null) {
-                        sb.Append('\n');
                         Stmt.Draw(sb, ref indent);
                     }
                 } else if (StmtType == StatementType.Assign) {
                     Ident.Draw(sb, ref indent);
                     if(Literal != null) {
-                        sb.Append('\n');
                         Literal.Draw(sb, ref indent);
                     } else if (Expression != null) {
-                        sb.Append('\n');
                         Expression.Draw(sb, ref indent);
                     }
                 } else if (StmtType == StatementType.Return) {
@@ -97,7 +99,29 @@ public class AstNode {
                     sb.Append(' ', spaces * indent);
                     sb.Append($"Align: {TypeInfo.Align}\n");
                     sb.Append(' ', spaces * indent);
-                    sb.Append($"Size:  {TypeInfo.Size}");
+                    sb.Append($"Size:  {TypeInfo.Size}\n");
+                    indent--;
+                } else if (StmtType == StatementType.Fundef) {
+                    Ident.Draw(sb, ref indent);
+                    if (TypeInfo != null) {
+                        sb.Append(' ', spaces * indent);
+                        sb.Append($"Return type: {TypeInfo.Name}\n");
+                    }
+                    sb.Append(' ', spaces * indent);
+                    sb.Append("Args:\n");
+                    indent++;
+                    if (Args != null) {
+                        foreach(var arg in Args) {
+                            arg.Draw(sb, ref indent);
+                        }
+                    }
+                    indent--;
+                    sb.Append(' ', spaces * indent);
+                    sb.Append("Body:\n");
+                    indent++;
+                    foreach(var node in Body) {
+                        node.Draw(sb, ref indent);
+                    }
                     indent--;
                 }
                 indent--;

@@ -5,30 +5,38 @@
 
 
 struct float2 {
-    x : float;
-    y : float;
+    x: float;
+    y: float;
 }
-
-hello := 2.3f * 21.222d / 4.0 + 1;
-world := 10.5f;
 
 struct float3 {
-    x : float;
-    y : float;
-    z : float;
+    x: float;
+    y: float;
+    z: float;
 }
 
-return hello + world;
-
 struct float4 {
-    x : float;
-    y : float;
-    z : float;
-    w : float;
+    x: float;
+    y: float;
+    z: float;
+    w: float;
 }
 
 struct int3 {
-    x : s32;
-    y : s32;
-    z : s32;
+    x: s32;
+    y: s32;
+    z: s32;
+}
+
+main :: () -> s32 {
+    hello := 2;
+    world := 10;
+
+    total := hello + world;
+
+    return total;
+}
+
+add :: (a: float, b:= (12f * 11f / (8f + 114f))) -> float {
+    return a + b;
 }

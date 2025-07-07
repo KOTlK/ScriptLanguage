@@ -48,40 +48,6 @@ public static class Lexer {
                     line++;
                     lineStart = i;
                     break;
-                case (char)Semicolon : {
-                    var token    = new Token();
-                    token.Type   = Semicolon;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                // I can't believe this language is real.
-                // I need curly brackets in this case or I'll get:
-                // "A local or parameter named 'token' cannot be declared
-                // in this scope because that name is used in an enclosing local scope
-                // to define a local or parameter".
-                // WHY THE FUCK CASE PLUS AND CASE MINUS CONSIDERED TO BE IN A SINGLE SCOPE????
-                case (char)Plus : {
-                    var token    = new Token();
-                    token.Type   = Plus;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Minus : {
-                    var token    = new Token();
-                    token.Type   = Minus;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Mul : {
-                    var token    = new Token();
-                    token.Type   = Mul;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
                 case (char)Div : {
                     if (text[i+1] == '/') {
                         i++;
@@ -97,118 +63,6 @@ public static class Lexer {
 
                     var token    = new Token();
                     token.Type   = Div;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Exp : {
-                    var token    = new Token();
-                    token.Type   = Exp;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Mod : {
-                    var token    = new Token();
-                    token.Type   = Mod;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)TokenType.Equals : {
-                    var token    = new Token();
-                    token.Type   = TokenType.Equals;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)OParen : {
-                    var token    = new Token();
-                    token.Type   = OParen;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)CParen : {
-                    var token    = new Token();
-                    token.Type   = CParen;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)ORParen : {
-                    var token    = new Token();
-                    token.Type   = ORParen;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)CRParen : {
-                    var token    = new Token();
-                    token.Type   = CRParen;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)OSQParen : {
-                    var token    = new Token();
-                    token.Type   = OSQParen;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)CSQParen : {
-                    var token    = new Token();
-                    token.Type   = CSQParen;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Colon : {
-                    var token    = new Token();
-                    token.Type   = Colon;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)And : {
-                    var token    = new Token();
-                    token.Type   = And;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Or : {
-                    var token    = new Token();
-                    token.Type   = Or;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Hash : {
-                    var token    = new Token();
-                    token.Type   = Hash;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)At : {
-                    var token    = new Token();
-                    token.Type   = At;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Dot : {
-                    var token    = new Token();
-                    token.Type   = Dot;
-                    token.Line   = line;
-                    token.Column = i - lineStart;
-                    tokens.Add(token);
-                } break;
-                case (char)Comma : {
-                    var token    = new Token();
-                    token.Type   = Comma;
                     token.Line   = line;
                     token.Column = i - lineStart;
                     tokens.Add(token);
@@ -284,7 +138,13 @@ public static class Lexer {
                     sb.Clear();
                     var col = i - lineStart;
 
-                    if (IsNumber(text[i])) {
+                    if (IsSpecialSymbol(text[i])) {
+                        var token    = new Token();
+                        token.Type   = (TokenType)text[i];
+                        token.Line   = line;
+                        token.Column = col;
+                        tokens.Add(token);
+                    } else if (IsNumber(text[i])) {
                         for ( ; i < len; ++i) {
                             if (IsSpecialSymbol(text[i])) {
                                 if(text[i] != '.') break;

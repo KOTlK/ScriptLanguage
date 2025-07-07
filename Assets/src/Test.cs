@@ -15,10 +15,6 @@ public class Test : MonoBehaviour {
         var err       = new ErrorStream();
         var sb        = new StringBuilder();
 
-        // Text.text = tokenizer.ToString();
-
-        // Text.text = sb.ToString();
-
         var ast = AstParser.Parse(tokenizer, err);
 
         if(err.Count > 0) {
@@ -33,6 +29,14 @@ public class Test : MonoBehaviour {
 
         sb.Append('\n', 3);
 
+        foreach(var node in ast.Functions) {
+            var indent = 0;
+            node.Draw(sb, ref indent);
+            sb.Append('\n', 1);
+        }
+        
+        sb.Append('\n', 3);
+
         foreach(var node in ast.Nodes) {
             var indent = 0;
             node.Draw(sb, ref indent);
@@ -40,7 +44,5 @@ public class Test : MonoBehaviour {
         }
 
         Text.text = sb.ToString();
-
-
     }
 }

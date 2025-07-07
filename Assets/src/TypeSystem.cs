@@ -99,6 +99,13 @@ public static class TypeSystem {
         Fields = null,
     };
 
+    public static readonly TypeInfo Void = new TypeInfo() {
+        Name   = "void",
+        Align  = 0,
+        Size   = 0,
+        Fields = null,
+    };
+
     public static void Init() {
         Types.Clear();
     }
@@ -134,6 +141,7 @@ public static class TypeSystem {
             case "double" : return true;
             case "string" : return true;
             case "char"   : return true;
+            case "void"   : return true;
             default       : return false;
         }
     }
@@ -152,6 +160,7 @@ public static class TypeSystem {
             case "double" : return Double;
             case "string" : return String;
             case "char"   : return Char;
+            case "void"   : return Void;
             default       : return null;
         }
     }

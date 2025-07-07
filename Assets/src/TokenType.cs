@@ -24,6 +24,9 @@ public enum TokenType : ushort {
     DQuote        = '"',
     Dot           = '.',
     Comma         = ',',
+    MoreThan      = '>',
+    LessThan      = '<',
+    Excpoint      = '!',
     Ident         = 256,
     EndOfFile     = 257,
     Return        = 258,
@@ -31,4 +34,6 @@ public enum TokenType : ushort {
     StringLiteral = 260,
     CharLiteral   = 261,
     Struct        = 262,
+    Void          = 263,
+    Null          = 263,
 }
