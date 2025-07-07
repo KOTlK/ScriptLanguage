@@ -16,7 +16,6 @@ public static class Lexer {
     public static HashSet<string> Keywords = new() {
         "if",
         "struct",
-        "void",
         "return",
         "for",
         "while",

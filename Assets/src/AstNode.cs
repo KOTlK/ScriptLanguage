@@ -123,6 +123,22 @@ public class AstNode {
                         node.Draw(sb, ref indent);
                     }
                     indent--;
+                } else if (StmtType == StatementType.Funcall) {
+                    Ident.Draw(sb, ref indent);
+                    sb.Append(' ', spaces * indent);
+                    sb.Append("Args:\n");
+                    if (Args != null) {
+                        indent++;
+                        foreach(var arg in Args) {
+                            arg.Draw(sb, ref indent);
+                        }
+                        indent--;
+                    }
+
+                    if (TypeInfo != null) {
+                        sb.Append(' ', spaces * indent);
+                        sb.Append($"Return type: {TypeInfo.Name}");
+                    }
                 }
                 indent--;
                 sb.Append('\n');

@@ -32,11 +32,16 @@ main :: () -> s32 {
     hello := 2;
     world := 10;
 
-    total := hello + world;
+    total := add(hello, world) + 15 / 2;
+    add(hello, total);
 
     return total;
 }
 
 add :: (a: float, b:= (12f * 11f / (8f + 114f))) -> float {
     return a + b;
+}
+
+print :: (str: string) {
+    // print code here =)
 }

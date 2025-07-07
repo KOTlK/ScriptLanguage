@@ -35,7 +35,7 @@ public static class AstParser {
                     var next  = tokenizer.Peek();
                     var next2 = tokenizer.Peek(2);
 
-                    if(next.Type == Colon && next2.Type == Colon) {
+                    if (next.Type == Colon && next2.Type == Colon) {
                         root.Functions.Add(ParseFundef(tokenizer, err));
                     }
                 } break;
@@ -80,6 +80,7 @@ public static class AstParser {
 
     //     return 0;
     // }
+
 
     private static AstNode ParseAssignment(Tokenizer tokenizer, ErrorStream err) {
         var prev  = tokenizer.Previous();
@@ -128,7 +129,11 @@ public static class AstParser {
 
         switch(token.Type) {
             case TokenType.Ident : {
-                left = MakeIdent(token.StringValue);
+                if (tokenizer.Peek().Type == ORParen) {
+                    left = ParseFuncall(tokenizer, err);
+                } else {
+                    left = MakeIdent(token.StringValue);
+                }
             } break;
             case TokenType.Literal : {
                 left = MakeLiteral(token);
@@ -329,19 +334,23 @@ public static class AstParser {
         if (AssertSymbol(cur, CRParen, err)) return null;
 
         var min = tokenizer.EatToken();
-        if (AssertSymbol(min, Minus, err)) return null;
 
-        var more = tokenizer.EatToken();
-        if (AssertSymbol(more, MoreThan, err)) return null;
+        if (min.Type == OParen) {
+            node.TypeInfo = TypeSystem.Void;
+        } else {
+            if (AssertSymbol(min, Minus, err)) return null;
 
-        var tp = tokenizer.EatToken();
-        if (AssertSymbol(tp, TokenType.Ident, err)) return null;
+            var more = tokenizer.EatToken();
+            if (AssertSymbol(more, MoreThan, err)) return null;
 
-        node.TypeInfo = TypeSystem.GetType(tp.StringValue);
-        tokenizer.EatToken();
+            var tp = tokenizer.EatToken();
+            if (AssertSymbol(tp, TokenType.Ident, err)) return null;
+
+            node.TypeInfo = TypeSystem.GetType(tp.StringValue);
+            tokenizer.EatToken();
+        }
+
         node.Body = ParseBody(tokenizer, err);
-
-        if (AssertSymbol(tokenizer.GetCurrent(), CParen, err)) return null;
 
         return node;
     }
@@ -362,11 +371,63 @@ public static class AstParser {
                 case TokenType.Return : {
                     nodes.Add(ParseReturn(tokenizer, err));
                 } break;
+                case TokenType.Ident : {
+                    var next = tokenizer.Peek();
+
+                    if (next.Type == ORParen) {
+                        nodes.Add(ParseFuncall(tokenizer, err));
+                        var semicolon = tokenizer.EatToken();
+
+                        if (AssertSymbol(semicolon, Semicolon, err)) return null;
+                    }
+                    break;
+                }
                 default : break;
             }
         }
 
+        if (AssertSymbol(tokenizer.GetCurrent(), CParen, err)) return null;
+
         return nodes;
+    }
+
+    private static AstNode ParseFuncall(Tokenizer tokenizer, ErrorStream err) {
+        var name      = tokenizer.GetCurrent();
+        var node      = new AstNode();
+        node.Type     = Statement;
+        node.StmtType = Funcall;
+        node.Ident    = MakeIdent(name.StringValue);
+
+        tokenizer.EatToken(); // ORParen 100% here
+        var cparen = tokenizer.EatToken();
+
+        if (cparen.Type == CRParen) {
+            tokenizer.EatToken();
+
+            var semicolon = tokenizer.EatToken();
+            if (AssertSymbol(semicolon, Semicolon, err)) return null;
+
+            return node;
+        }
+
+        node.Args = new();
+
+        while (tokenizer.GetCurrent().Type != EndOfFile) {
+            var arg  = ParseExpression(tokenizer, err, -9999);
+            var next = tokenizer.EatToken();
+
+            node.Args.Add(arg);
+
+            if (next.Type == CRParen) break;
+            if (AssertSymbol(next, Comma, err)) return null;
+
+            tokenizer.EatToken();
+        }
+
+        cparen = tokenizer.GetCurrent();
+        if (AssertSymbol(cparen, CRParen, err)) return null;
+
+        return node;
     }
 
     private static AstNode MakeIdent(string ident) {
