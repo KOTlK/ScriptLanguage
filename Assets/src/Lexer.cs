@@ -1,4 +1,3 @@
-using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
 using Enum = System.Enum;
@@ -13,7 +12,7 @@ public struct Token {
 }
 
 public static class Lexer {
-    public static HashSet<string> Keywords = new() {
+    public static HashSet<string> Keywords = new HashSet<string>() {
         "if",
         "struct",
         "return",
@@ -27,14 +26,14 @@ public static class Lexer {
         "static",
     };
 
-    public static Tokenizer Tokenize(string text) {
+    public static Tokenizer Tokenize(string text, ErrorStream err) {
         var tokenizer = new Tokenizer();
         var tokens    = new List<Token>();
         var sb        = new StringBuilder();
         var len       = text.Length;
         var line      = 1;
         var lineStart = -1;
-        sb = new();
+        sb = new StringBuilder();
 
         for(var i = 0; i < len; ++i) {
             var c = text[i];
@@ -74,8 +73,8 @@ public static class Lexer {
                     i++;
 
                     if (text[i] == (char)SQuote) {
-                        Debug.LogError($"Lexer Error {line}:{i-lineStart}. Expected character, got {SQuote}. Did you mean \"\'\"?");
-                        return tokenizer;
+                        err.Push($"Lexer Error {line}:{i-lineStart}. Expected character, got {SQuote}. Did you mean \"\'\"?");
+                        return null;
                     }
 
                     if (text[i] == '\\') {
@@ -87,7 +86,7 @@ public static class Lexer {
                     i++;
 
                     if (text[i] != (char)SQuote) {
-                        Debug.LogError($"Lexer Error {line}:{i-lineStart}. Expected closing {SQuote}, got {text[i]}.");
+                        err.Push($"Lexer Error {line}:{i-lineStart}. Expected closing {SQuote}, got {text[i]}.");
                         return tokenizer;
                     }
 
@@ -127,7 +126,7 @@ public static class Lexer {
                     }
 
                     if (text[i] != '"') {
-                        Debug.LogError($"Lexer Error {line}:{i-lineStart}. Expected closing {DQuote}, but got {text[i]}");
+                        err.Push($"Lexer Error {line}:{i-lineStart}. Expected closing {DQuote}, but got {text[i]}");
                         return tokenizer;
                     }
 
@@ -151,6 +150,7 @@ public static class Lexer {
                             if (text[i] == ' ')             break;
                             if (text[i] == '\t')            break;
                             if (text[i] == '\r')            break;
+                            if (text[i] == '\n')            break;
 
                             sb.Append(text[i]);
                         }
@@ -171,6 +171,7 @@ public static class Lexer {
                             if (text[i] == ' ')             break;
                             if (text[i] == '\t')            break;
                             if (text[i] == '\r')            break;
+                            if (text[i] == '\n')            break;
 
                             sb.Append(text[i]);
                         }
@@ -188,7 +189,7 @@ public static class Lexer {
                                 token.Column      = col;
                                 tokens.Add(token);
                             } else {
-                                Debug.LogError($"Cannot parse keyword {txt}");
+                                err.Push($"Cannot parse keyword {txt}");
                             }
                         } else {
                             var token         = new Token();

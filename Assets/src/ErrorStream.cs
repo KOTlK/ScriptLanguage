@@ -6,9 +6,9 @@ public struct Error {
 }
 
 public class ErrorStream {
-    public List<Error> Errors = new();
+    public List<Error> Errors = new List<Error>();
 
-    private static StringBuilder sb = new();
+    private static StringBuilder sb = new StringBuilder();
 
     public int Count => Errors.Count;
 
@@ -37,6 +37,12 @@ public class ErrorStream {
     public void TypeAlreadyDefined(int line, int column, string name) {
         Errors.Add(new Error() {
             Message = $"{line}:{column}. Type '{name}' is already defined."
+        });
+    }
+
+    public void FuncAlreadyDefined(int line, int column, string name) {
+        Errors.Add(new Error() {
+            Message = $"{line}:{column}. Function '{name}' is already defined."
         });
     }
 }

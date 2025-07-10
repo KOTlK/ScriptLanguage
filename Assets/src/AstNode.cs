@@ -75,13 +75,18 @@ public class AstNode {
                 sb.Append('\n');
                 indent++;
                 if(StmtType == StatementType.VarDecl) {
-                    Ident.Draw(sb, ref indent);
-                    if(Stmt != null) {
+                    if (TypeInfo == null) {
+                        Ident.Draw(sb, ref indent);
+                    } else {
+                        sb.Append(' ', indent * spaces);
+                        sb.Append($"{Ident.String}: {TypeInfo.Name}");
+                    }
+                    if (Stmt != null) {
                         Stmt.Draw(sb, ref indent);
                     }
                 } else if (StmtType == StatementType.Assign) {
                     Ident.Draw(sb, ref indent);
-                    if(Literal != null) {
+                    if (Literal != null) {
                         Literal.Draw(sb, ref indent);
                     } else if (Expression != null) {
                         Expression.Draw(sb, ref indent);

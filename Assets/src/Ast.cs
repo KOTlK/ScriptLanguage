@@ -5,9 +5,9 @@ using static TokenType;
 using static StatementType;
 
 public class Ast {
-    public List<AstNode> Typedefs  = new();
-    public List<AstNode> Nodes     = new();
-    public List<AstNode> Functions = new();
+    public List<AstNode> Typedefs  = new List<AstNode>();
+    public List<AstNode> Nodes     = new List<AstNode>();
+    public List<AstNode> Functions = new List<AstNode>();
 
     public void Add(AstNode child) {
         Nodes.Add(child);
@@ -84,7 +84,7 @@ public static class AstParser {
 
     private static AstNode ParseAssignment(Tokenizer tokenizer, ErrorStream err) {
         var prev  = tokenizer.Previous();
-        var next  = tokenizer.Peek();
+        // var next  = tokenizer.Peek();
         var ident = prev.Type == TokenType.Ident ? prev : tokenizer.Previous(2);
 
         // ident = expr; == assign
@@ -189,7 +189,7 @@ public static class AstParser {
             node.OperatorType = token.Type;
             node.IsBinary     = true;
             node.Left         = left;
-            var next = tokenizer.EatToken();
+            tokenizer.EatToken();
             node.Right        = ParseExpression(tokenizer, err, tokenPrec + 1);
 
             left = node;
@@ -207,7 +207,7 @@ public static class AstParser {
         node.StmtType = Typedef;
         node.TypeInfo = type;
         type.Name     = name.StringValue;
-        type.Fields   = new();
+        type.Fields   = new List<FieldInfo>();
 
         if (next.Type != OParen) {
             err.UnexpectedSymbol(next.Line, next.Column, OParen, next.Type);
@@ -296,7 +296,7 @@ public static class AstParser {
         if (AssertSymbol(next, ORParen, err)) return null;
 
         if (tokenizer.Peek().Type != CRParen) {
-            node.Args = new();
+            node.Args = new List<AstNode>();
             // parse arguments
             while (next.Type != EndOfFile) {
                 next = tokenizer.EatToken(); // next is ident
@@ -317,6 +317,9 @@ public static class AstParser {
                     tokenizer.EatToken();
                     tokenizer.EatToken();
                     assign = MakeAssign(ident, ParseExpression(tokenizer, err, -9999));
+                    if (assign.Expression.Type == AstType.Literal) {
+                        type = assign.Expression.TypeInfo;
+                    }
                 } else {
                     var t = tokenizer.EatToken();
                     type  = TypeSystem.GetType(t.StringValue);
@@ -410,7 +413,7 @@ public static class AstParser {
             return node;
         }
 
-        node.Args = new();
+        node.Args = new List<AstNode>();
 
         while (tokenizer.GetCurrent().Type != EndOfFile) {
             var arg  = ParseExpression(tokenizer, err, -9999);
@@ -498,15 +501,17 @@ public static class AstParser {
         }
     }
 
-    private static bool IsOperator(Token token) => token.Type switch {
-        Minus => true,
-        Plus  => true,
-        Mul   => true,
-        Div   => true,
-        Exp   => true,
-        Mod   => true,
-        _     => false,
-    };
+    private static bool IsOperator(Token token) {
+        switch(token.Type) {
+            case Minus : return true;
+            case Plus  : return true;
+            case Mul   : return true;
+            case Div   : return true;
+            case Exp   : return true;
+            case Mod   : return true;
+            default    : return false;
+        }
+    }
 
     private static int GetPrecedence(TokenType token) {
         switch (token) {

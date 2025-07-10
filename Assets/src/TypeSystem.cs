@@ -13,7 +13,7 @@ public struct FieldInfo {
 }
 
 public static class TypeSystem {
-    public static Dictionary<string, TypeInfo> Types = new();
+    public static Dictionary<string, TypeInfo> Types = new Dictionary<string, TypeInfo>();
 
     public static readonly TypeInfo u8 = new TypeInfo() {
         Name   = "u8",
@@ -125,6 +125,10 @@ public static class TypeSystem {
         }
 
         return Types[name];
+    }
+
+    public static bool IsPrimitive(TypeInfo type) {
+        return IsPrimitive(type.Name);
     }
 
     public static bool IsPrimitive(string typeName) {
