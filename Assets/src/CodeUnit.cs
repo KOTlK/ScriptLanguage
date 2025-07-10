@@ -45,8 +45,13 @@ public unsafe class CodeUnit {
         }
     }
 
+    public void Pushlarg(byte index) {
+        Push(larg);
+        Push(index);
+    }
+
     // mono compiler calls this function instead of the one below. Why?
-    public int PushFunction(int argCount, int retSize, List<int> argSizes = null) {
+    public int PushFunction(byte argCount, uint retSize, List<ushort> argSizes = null) {
         Push(func);
         Push(argCount);
         Push(retSize);
@@ -58,7 +63,7 @@ public unsafe class CodeUnit {
         return p;
     }
 
-    public int PushFunction(uint argCount, uint retSize, params int[] argSizes) {
+    public int PushFunction(byte argCount, uint retSize, params ushort[] argSizes) {
         Push(func);
         Push(argCount);
         Push(retSize);

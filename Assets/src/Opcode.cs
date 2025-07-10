@@ -6,5 +6,5 @@ public enum Opcode : ushort {
     func      = 4,
     call      = 5,
     ret       = 6,
-    larg_s32  = 7,
+    larg      = 7,
 }

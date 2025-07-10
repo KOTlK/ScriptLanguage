@@ -4,6 +4,15 @@ using System.Collections.Generic;
 
 using static Opcode;
 
+/*
+    Stack Frame:
+
+    any size        4B         4B         4B         1B        2B each      2B each
+    args [n-0] | return to | prev fp | ret size | argsCount | arg sizes | local sizes
+                                                            ^
+                                                            |
+                                                New frame pointer points here
+*/
 public static unsafe class SLVM {
     public static byte[]            Stack;
     public static uint              StackCurrent;
@@ -11,7 +20,7 @@ public static unsafe class SLVM {
     private static ErrorStream Err;
 
     private const int  StackSize = 1024 * 1024 * 8; // 8mb stack
-    private const uint FrameHeader = 16;
+    private const uint FrameHeader = 13;
 
     public static void Init() {
         Stack  = null;
@@ -54,7 +63,7 @@ public static unsafe class SLVM {
                     var newPc     = Readu32(bytes, ref pc);
                     var oldPc     = pc;
                     pc = newPc;
-                    var argsCount = Readu32(bytes, ref pc);
+                    var argsCount = Readu8(bytes, ref pc);
                     var retSize   = Readu32(bytes, ref pc);
                     StackPush(oldPc);
                     StackPush(fp);
@@ -63,7 +72,7 @@ public static unsafe class SLVM {
                     fp = StackCurrent;
 
                     for (var i = 0; i < argsCount; ++i) {
-                        StackPush(Readu32(bytes, ref pc));
+                        StackPush(Readu16(bytes, ref pc));
                     }
                 } break;
                 case add_s32 : {
@@ -85,7 +94,7 @@ public static unsafe class SLVM {
                         back += ReadArgSize(i, fp);
                     }
                     StackCurrent = fp - back;
-                    StackPush(fp + argsCount * 4, retSize);
+                    StackPush(fp + (uint)argsCount * 2, retSize);
 
                     fp = oldFp;
                     pc = oldPc;
@@ -97,13 +106,13 @@ public static unsafe class SLVM {
                     StackPops32();
                     break;
                 }
-                case larg_s32 : {
-                    var index = Reads32(bytes, ref pc);
-                    StackPush(ReadArgs32(index, fp));
+                case larg : {
+                    var index = Readu8(bytes, ref pc);
+                    StackPushArg(index, fp);
                     break;
                 }
                 default : {
-                    err.Push($"Unknown opcode at {pc}");
+                    err.Push("Unknown opcode at %", pc);
                     return 3;
                 }
             }
@@ -112,38 +121,33 @@ public static unsafe class SLVM {
         return StackPops32();
     }
 
-    public static uint ReadArgsCount(uint fp) {
-        var s = (uint)(Stack[fp - 4]       |
-                       Stack[fp - 3] << 8  |
-                       Stack[fp - 2] << 16 |
-                       Stack[fp - 1] << 24);
-
-        return s;
+    public static byte ReadArgsCount(uint fp) {
+        return (Stack[fp - 1]);
     }
 
     public static uint ReadRetSize(uint fp) {
-        var s = (uint)(Stack[fp - 8]       |
-                       Stack[fp - 7] << 8  |
-                       Stack[fp - 6] << 16 |
-                       Stack[fp - 5] << 24);
+        var s = (uint)(Stack[fp - 5]       |
+                       Stack[fp - 4] << 8  |
+                       Stack[fp - 3] << 16 |
+                       Stack[fp - 2] << 24);
 
         return s;
     }
 
     public static uint ReadOldFp(uint fp) {
-        var s = (uint)(Stack[fp - 12]       |
-                       Stack[fp - 11] << 8  |
-                       Stack[fp - 10] << 16 |
-                       Stack[fp - 9] << 24);
+        var s = (uint)(Stack[fp - 9]       |
+                       Stack[fp - 8] << 8  |
+                       Stack[fp - 7] << 16 |
+                       Stack[fp - 6] << 24);
 
         return s;
     }
 
     public static uint ReadOldPc(uint fp) {
-        var s = (uint)(Stack[fp - 16]       |
-                       Stack[fp - 15] << 8  |
-                       Stack[fp - 14] << 16 |
-                       Stack[fp - 13] << 24);
+        var s = (uint)(Stack[fp - 13]       |
+                       Stack[fp - 12] << 8  |
+                       Stack[fp - 11] << 16 |
+                       Stack[fp - 10] << 24);
 
         return s;
     }
@@ -481,34 +485,25 @@ public static unsafe class SLVM {
         return *(double*)&i;
     }
 
-    public static int ReadArgs32(int index, uint fp) {
+    public static void StackPushArg(int index, uint fp) {
+        var size  = ReadArgSize(index, fp);
         var start = (fp - FrameHeader);
 
         for (int i = index; i >= 0; --i) {
-            var argSize = (uint)(Stack[fp]           |
-                                 Stack[fp + 1] << 8  |
-                                 Stack[fp + 2] << 16 |
-                                 Stack[fp + 3] << 24);
+            var argSize = ReadArgSize(i, fp);
 
             start -= argSize;
-            fp    += 4;
+            fp    += 2;
         }
 
-        var s = Stack[start + 0]       |
-                Stack[start + 1] << 8  |
-                Stack[start + 2] << 16 |
-                Stack[start + 3] << 24;
-
-        return s;
+        StackPush(start, size);
     }
 
-    public static uint ReadArgSize(int index, uint fp) {
-        var start = fp + index * 4;
+    public static ushort ReadArgSize(int index, uint fp) {
+        var start = fp + index * 2;
 
-        var s = (uint)(Stack[start + 0]       |
-                       Stack[start + 1] << 8  |
-                       Stack[start + 2] << 16 |
-                       Stack[start + 3] << 24);
+        var s = (ushort)(Stack[start + 0]   |
+                         Stack[start + 1] << 8);
 
         return s;
     }
@@ -537,7 +532,7 @@ public static unsafe class SLVM {
             switch (opcode) {
                 case func : {
                     sb.Append(".func");
-                    var argCount = Readu32(bytes, ref pc);
+                    var argCount = Readu8(bytes, ref pc);
                     sb.Append(' ');
                     sb.Append(argCount.ToString());
                     var retSize = Readu32(bytes, ref pc);
@@ -546,7 +541,7 @@ public static unsafe class SLVM {
 
                     for (int i = 0; i < argCount; ++i) {
                         sb.Append(' ');
-                        sb.Append(Readu32(bytes, ref pc));
+                        sb.Append(Readu16(bytes, ref pc));
                     }
                 } break;
                 case call : {
@@ -566,10 +561,10 @@ public static unsafe class SLVM {
                     var val = Reads32(bytes, ref pc);
                     sb.Append(val.ToString());
                 } break;
-                case larg_s32 : {
+                case larg : {
                     sb.Append(opcode.ToString());
                     sb.Append(' ');
-                    var index = Readu32(bytes, ref pc);
+                    var index = Readu8(bytes, ref pc);
                     sb.Append(index.ToString());
                 } break;
                 default : {

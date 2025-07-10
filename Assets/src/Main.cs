@@ -61,19 +61,19 @@ public static class Program {
         // Text.text = sb.ToString();
         var cu = new CodeUnit(256);
         cu.PushFunction(2, 4, 4, 4);
-        cu.Push(larg_s32, 0);
-        cu.Push(larg_s32, 1);
+        cu.Pushlarg(0);
+        cu.Pushlarg(1);
         cu.Push(add_s32);
         cu.Push(ret);
         cu.PushFunction(2, 4, 4, 4);
-        cu.Push(larg_s32, 0);
-        cu.Push(larg_s32, 1);
+        cu.Pushlarg(0);
+        cu.Pushlarg(1);
         cu.PushCall(10);
         cu.Push(ret);
         cu.PushMain();
         cu.Push(push_s32, 10);
         cu.Push(push_s32, 5);
-        cu.PushCall(44);
+        cu.PushCall(31);
         cu.Push(ret);
 
         if (File.Exists($"{directory}/Test.cu")) {

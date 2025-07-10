@@ -18,14 +18,21 @@ public class ErrorStream {
         });
     }
 
-    public override string ToString() {
+    public void Push(string message, params object[] args) {
         sb.Clear();
+        var cur = 0;
 
-        foreach(var err in Errors) {
-            sb.AppendLine($"Error: {err.Message}");
+        for (var i = 0; i < message.Length; ++i) {
+            if (message[i] == '%' && message[i-1] != '\\') {
+                sb.Append(args[cur++].ToString());
+                continue;
+            }
+
+            sb.Append(message[i]);
         }
 
-        return sb.ToString();
+        Push(sb.ToString());
+        sb.Clear();
     }
 
     public void UnexpectedSymbol(int line, int column, TokenType expected, TokenType got) {
@@ -44,5 +51,15 @@ public class ErrorStream {
         Errors.Add(new Error() {
             Message = $"{line}:{column}. Function '{name}' is already defined."
         });
+    }
+
+    public override string ToString() {
+        sb.Clear();
+
+        foreach(var err in Errors) {
+            sb.AppendLine($"Error: {err.Message}");
+        }
+
+        return sb.ToString();
     }
 }
