@@ -7,8 +7,8 @@ using static Opcode;
 /*
     Stack Frame:
 
-    any size        4B         4B         4B         1B        2B each      2B each
-    args [n-0] | return to | prev fp | ret size | argsCount | arg sizes | local sizes
+    any size        4B         4B         4B         1B         2B each        2B each
+    args [n-0] | return to | prev fp | ret size | argsCount | arg offsets | local offsets
                                                             ^
                                                             |
                                                 New frame pointer points here
@@ -90,12 +90,10 @@ public static unsafe class SLVM {
                     var retSize   = ReadRetSize(fp);
                     var argsCount = ReadArgsCount(fp);
                     uint back     = FrameHeader;
-                    for (var i = 0; i < argsCount; ++i) {
-                        back += ReadArgSize(i, fp);
-                    }
+
+                    back += ReadArgOffset(argsCount - 1, fp);
                     StackCurrent = fp - back;
                     StackPush(fp + (uint)argsCount * 2, retSize);
-
                     fp = oldFp;
                     pc = oldPc;
                 } break;
@@ -486,20 +484,20 @@ public static unsafe class SLVM {
     }
 
     public static void StackPushArg(int index, uint fp) {
-        var size  = ReadArgSize(index, fp);
-        var start = (fp - FrameHeader);
+        var offset  = ReadArgOffset(index, fp);
+        var size    = offset;
 
-        for (int i = index; i >= 0; --i) {
-            var argSize = ReadArgSize(i, fp);
-
-            start -= argSize;
-            fp    += 2;
+        // if index == 0 size = offset
+        if(index != 0) {
+            size -= ReadArgOffset(index - 1, fp);
         }
+
+        var start   = (fp - FrameHeader) - offset;
 
         StackPush(start, size);
     }
 
-    public static ushort ReadArgSize(int index, uint fp) {
+    public static ushort ReadArgOffset(int index, uint fp) {
         var start = fp + index * 2;
 
         var s = (ushort)(Stack[start + 0]   |

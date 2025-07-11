@@ -55,8 +55,10 @@ public unsafe class CodeUnit {
         Push(func);
         Push(argCount);
         Push(retSize);
+        ushort offset = 0;
         for (var i = 0; i < argCount; ++i) {
-            Push(argSizes[i]);
+            offset += argSizes[i];
+            Push(offset);
         }
         var p = Count;
         Functions.Add(p);
@@ -67,8 +69,10 @@ public unsafe class CodeUnit {
         Push(func);
         Push(argCount);
         Push(retSize);
+        ushort offset = 0;
         for (var i = 0; i < argCount; ++i) {
-            Push(argSizes[i]);
+            offset += argSizes[i];
+            Push(offset);
         }
         var p = Count;
         Functions.Add(p);
