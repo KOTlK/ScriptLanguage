@@ -1,0 +1,3 @@
+[submodule "Assets/src/Compiler"]
+	path = Assets/src/Compiler
+	url = https://github.com/KOTlK/sl_compiler.git
